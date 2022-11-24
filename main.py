@@ -1,4 +1,5 @@
 import csv
+import os.path
 import sys
 from typing import Optional, cast
 
@@ -129,15 +130,16 @@ def main(argv):
             )
 
             # exporting the result of the execution to a properties file
-            result_file = open("result.properties", "w")
+            parent_dir = os.path.dirname(out_fn)
+            out_fn.replace(parent_dir, "")
+            # example file-name: EXPL__SEQ_ITP.sanfoundry_24-1.properties
+            result_file = open(argv[2]+out_fn.split('.')[0]+"."+out_fn.split('.')[1]+".properties", "w")
             # TODO dinamikus filename, mappastruktúra
             exit_code = cast(Optional[util.ProcessExitCode], run_result.pop("exitcode", None))
 
-            def print_optional_result(file, key, b=False):
+            def print_optional_result(file, key):
                 if key in run_result:
                     file.write(f"{key}={run_result[key]}\n")
-                    if b:
-                        print(key, run_result[key])
 
             print_optional_result(result_file, "starttime")
             print_optional_result(result_file, "terminationreason")
@@ -154,7 +156,7 @@ def main(argv):
             print_optional_result(result_file, "memory")
             print_optional_result(result_file, "blkio-read")
             print_optional_result(result_file, "blkio-write")
-            print_optional_result(result_file, "exitcode", True)
+            print_optional_result(result_file, "exitcode")
 
             result_file.close()
 
