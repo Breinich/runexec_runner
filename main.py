@@ -1,45 +1,44 @@
 import csv
 import sys
+from typing import Optional, cast
+
+from benchexec import util
 from benchexec.runexecutor import RunExecutor
 
 
 def main(argv):
-    #     args,
-    #     output_filename=run.log_file,
-    #     output_dir=run.result_files_folder,
-    #     result_files_patterns=benchmark.result_files_patterns,
-    #     hardtimelimit=benchmark.rlimits.cputime_hard,
-    #     softtimelimit=benchmark.rlimits.cputime,
-    #     walltimelimit=benchmark.rlimits.walltime,
-    #     cores=self.my_cpus,
-    #     memory_nodes=self.my_memory_nodes,
-    #     memlimit=benchmark.rlimits.memory,
-    #     environments=benchmark.environment(),
-    #     workingDir=benchmark.working_directory(),
-    #     maxLogfileSize=benchmark.config.maxLogfileSize,
-    #     files_count_limit=benchmark.config.filesCountLimit,
-    #     files_size_limit=benchmark.config.filesSizeLimit,
+
+    # Reading the run scenarios from the *.csv, that is given as a program argument
     with open(argv[1]) as input_csv:
         input_reader = csv.reader(input_csv, delimiter=';')
         for row in input_reader:
+
+            # The run scenario's parameters
             args2 = row[0][1:-1].split(', ')
             i = 0
             for a in args2:
                 a = a[1:-1]
                 args2[i] = a
                 i = i + 1
+
             out_fn = row[1]
+
             out_dir = row[2]
+
             res_fp = row[3]
+
             hardtl = None
             if row[4].isnumeric():
                 hardtl = int(row[4])
+
             softtl = None
             if row[5].isdigit():
                 softtl = int(row[5])
+
             walltl = None
             if row[6].isnumeric():
                 walltl = int(row[6])
+
             cores = None
             if row[7] != '':
                 tmp0 = row[7][1:-1]
@@ -61,6 +60,7 @@ def main(argv):
                 env = dict((a[1:-1], b[1:-1])
                            for a, b in (element.split(':')
                                         for element in row[10][1:-1].split(', ')))
+
             w_dir = row[11]
 
             max_lfs = None
@@ -75,13 +75,14 @@ def main(argv):
             if row[14].isnumeric():
                 files_sl = int(row[14])
 
+            # RunExec's settings parameters
             param_dict = {}
             if row[15] != "{}":
                 temp1 = row[15][1:-1].split('{')
                 temp2 = temp1[1].split('}')
                 temp3 = temp1[0].split(', ')
 
-                # key of the value, that is a dict
+                # key of the value, that is a dictionary
                 xtra = temp3.pop(-1)[1:-3]
 
                 for element in temp3:
@@ -106,7 +107,9 @@ def main(argv):
                 elif param_dict.get(key) == "False":
                     param_dict[key] = False
 
-            # Union[OrderedDict[str, Union[ProcessExitCode, dict, str]], Dict[str, str], Dict[str, str]]
+            # instanciate the RunExecutor with the given parameters - param_dict -
+            # execute the run scenario, that's parameters have been read before
+            # TODO runexec hova rakja a kimeneti file-okat
             run_result = RunExecutor(**param_dict).execute_run(
                 args2,
                 output_filename=out_fn,
@@ -125,24 +128,35 @@ def main(argv):
                 files_size_limit=files_sl,
             )
 
+            # exporting the result of the execution to a properties file
+            result_file = open("result.properties", "w")
+            # TODO dinamikus filename, mappastruktúra
+            exit_code = cast(Optional[util.ProcessExitCode], run_result.pop("exitcode", None))
 
+            def print_optional_result(file, key, b=False):
+                if key in run_result:
+                    file.write(f"{key}={run_result[key]}\n")
+                    if b:
+                        print(key, run_result[key])
 
-    #     args,
-    #     output_filename=run.log_file,
-    #     output_dir=run.result_files_folder,
-    #     result_files_patterns=benchmark.result_files_patterns,
-    #     hardtimelimit=benchmark.rlimits.cputime_hard,
-    #     softtimelimit=benchmark.rlimits.cputime,
-    #     walltimelimit=benchmark.rlimits.walltime,
-    #     cores=self.my_cpus,
-    #     memory_nodes=self.my_memory_nodes,
-    #     memlimit=benchmark.rlimits.memory,
-    #     environments=benchmark.environment(),
-    #     workingDir=benchmark.working_directory(),
-    #     maxLogfileSize=benchmark.config.maxLogfileSize,
-    #     files_count_limit=benchmark.config.filesCountLimit,
-    #     files_size_limit=benchmark.config.filesSizeLimit,
-    # )
+            print_optional_result(result_file, "starttime")
+            print_optional_result(result_file, "terminationreason")
+
+            result_file.write(f"exitcode={repr(exit_code)}\n")
+
+            print_optional_result(result_file, "walltime")
+            print_optional_result(result_file, "cputime")
+
+            for key in sorted(run_result.keys()):
+                if key.startswith("cputime-"):
+                    result_file.write(f"{key}={run_result[key]:.9f}\n")
+
+            print_optional_result(result_file, "memory")
+            print_optional_result(result_file, "blkio-read")
+            print_optional_result(result_file, "blkio-write")
+            print_optional_result(result_file, "exitcode", True)
+
+            result_file.close()
 
 
 if __name__ == '__main__':
