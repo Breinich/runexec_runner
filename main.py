@@ -130,11 +130,13 @@ def main(argv):
             )
 
             # exporting the result of the execution to a properties file
-            parent_dir = os.path.dirname(out_fn)
-            out_fn.replace(parent_dir, "")
+            parent_folder = argv[2]
+            if parent_folder[-1] != '/':
+                parent_folder += '/'
+
             # example file-name: EXPL__SEQ_ITP.sanfoundry_24-1.properties
-            result_file = open(argv[2]+out_fn.split('.')[0]+"."+out_fn.split('.')[1]+".properties", "w")
-            # TODO dinamikus filename, mappastruktúra
+            result_file = open(parent_folder+out_fn.split('/')[-1].split('.')[0]+"."+out_fn.split('/')[-1].split('.')[1]+".properties", "w")
+
             exit_code = cast(Optional[util.ProcessExitCode], run_result.pop("exitcode", None))
 
             def print_optional_result(file, key):
