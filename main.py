@@ -130,9 +130,13 @@ def main(argv):
             )
 
             # exporting the result of the execution to a properties file
-            parent_folder = argv[2]
-            if parent_folder[-1] != '/':
-                parent_folder += '/'
+            if len(argv) > 2:
+                parent_folder = argv[2]
+                if parent_folder != "":
+                    if parent_folder[-1] != '/':
+                        parent_folder += '/'
+            else:
+                parent_folder = ""
 
             # example file-name: EXPL__SEQ_ITP.sanfoundry_24-1.properties
             result_file = open(parent_folder+out_fn.split('/')[-1].split('.')[0]+"."+out_fn.split('/')[-1].split('.')[1]+".properties", "w")
