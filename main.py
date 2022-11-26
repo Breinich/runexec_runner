@@ -164,7 +164,12 @@ def main(argv):
             print_optional_result(result_file, "blkio-write")
             print_optional_result(result_file, "exitcode")
 
+            result_file.write("log_file="+out_fn+"\n")
+            result_file.write("result_files_folder="+out_dir+"\n")
+
             result_file.close()
+
+    os.remove(argv[1])
 
 
 if __name__ == '__main__':
