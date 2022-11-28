@@ -178,7 +178,12 @@ def main(argv):
 
             result_file.close()
 
-    printOut("^\n\nWORK done!")
+    instance_num = ""
+    for part in argv[1].split('.'):
+        if re.compile('[0-9-_]').match(part):
+            instance_num = part
+            break
+    printOut("^\n\nWORK done!\n\ninstance code for Benchexec: "+instance_num)
 
 
 def printOut(value, end="\n"):
