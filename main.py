@@ -8,9 +8,26 @@ from benchexec.runexecutor import RunExecutor
 
 
 def main(argv):
+    # checking input folder format
+    if len(argv) > 1:
+        csv_folder = argv[1]
+        if csv_folder != "":
+            if csv_folder[-1] != '/':
+                csv_folder += '/'
+    else:
+        csv_folder = ""
+
+    # checking output folder format
+    if len(argv) > 2:
+        parent_folder = argv[2]
+        if parent_folder != "":
+            if parent_folder[-1] != '/':
+                parent_folder += '/'
+    else:
+        parent_folder = ""
 
     # Reading the run scenarios from the *.csv, that is given as a program argument
-    with open(argv[1]) as input_csv:
+    with open(csv_folder + "command.csv") as input_csv:
         input_reader = csv.reader(input_csv, delimiter=';')
         for row in input_reader:
 
@@ -22,9 +39,9 @@ def main(argv):
                 args2[i] = a
                 i = i + 1
 
-            out_fn = row[1]
+            out_fn = parent_folder + row[1]
 
-            out_dir = row[2]
+            out_dir = parent_folder + row[2]
 
             res_fp = row[3]
 
@@ -108,9 +125,8 @@ def main(argv):
                 elif param_dict.get(key) == "False":
                     param_dict[key] = False
 
-            # instanciate the RunExecutor with the given parameters - param_dict -
-            # execute the run scenario, that's parameters have been read before
-            # TODO runexec hova rakja a kimeneti file-okat
+            # instantiate the RunExecutor with the given parameters - @param_dict -
+            # execute the run, that's parameters have been read before
             run_result = RunExecutor(**param_dict).execute_run(
                 args2,
                 output_filename=out_fn,
@@ -130,22 +146,17 @@ def main(argv):
             )
 
             # exporting the result of the execution to a properties file
-            if len(argv) > 2:
-                parent_folder = argv[2]
-                if parent_folder != "":
-                    if parent_folder[-1] != '/':
-                        parent_folder += '/'
-            else:
-                parent_folder = ""
 
             # example file-name: EXPL__SEQ_ITP.sanfoundry_24-1.properties
-            result_file = open(parent_folder+out_fn.split('/')[-1].split('.')[0]+"."+out_fn.split('/')[-1].split('.')[1]+".properties", "w")
+            result_file = open(
+                parent_folder + out_fn.split('/')[-1].split('.')[0] + "." + out_fn.split('/')[-1].split('.')[
+                    1] + ".properties", "w")
 
             exit_code = cast(Optional[util.ProcessExitCode], run_result.pop("exitcode", None))
 
-            def print_optional_result(file, key):
-                if key in run_result:
-                    file.write(f"{key}={run_result[key]}\n")
+            def print_optional_result(file, res_key):
+                if res_key in run_result:
+                    file.write(f"{res_key}={run_result[res_key]}\n")
 
             print_optional_result(result_file, "starttime")
             print_optional_result(result_file, "terminationreason")
@@ -164,12 +175,12 @@ def main(argv):
             print_optional_result(result_file, "blkio-write")
             print_optional_result(result_file, "exitcode")
 
-            result_file.write("log_file="+out_fn+"\n")
-            result_file.write("result_files_folder="+out_dir+"\n")
+            result_file.write("log_file=" + row[1] + "\n")
+            result_file.write("result_files_folder=" + row[2] + "\n")
 
             result_file.close()
 
-    os.remove(argv[1])
+    os.remove(csv_folder + "command.csv")
 
 
 if __name__ == '__main__':
