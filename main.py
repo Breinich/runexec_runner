@@ -1,5 +1,6 @@
 import csv
 import os.path
+import re
 import sys
 from typing import Optional, cast
 
@@ -9,27 +10,25 @@ from benchexec.runexecutor import RunExecutor
 
 def main(argv):
     # checking input folder format
-    if len(argv) > 1:
-        csv_folder = argv[1]
-        if csv_folder != "":
-            if csv_folder[-1] != '/':
-                csv_folder += '/'
-    else:
-        csv_folder = ""
+    if not re.compile('.*\.csv').match(argv[1]):
+        sys.exit("Bad command.csv input!")
 
     # checking output folder format
     if len(argv) > 2:
         parent_folder = argv[2]
-        if parent_folder != "":
+        if not os.path.exists(parent_folder):
             if parent_folder[-1] != '/':
                 parent_folder += '/'
     else:
         parent_folder = ""
 
+    printOut("Reading and executing commands: ", end="")
+
     # Reading the run scenarios from the *.csv, that is given as a program argument
-    with open(csv_folder + "command.csv") as input_csv:
+    with open(argv[1]) as input_csv:
         input_reader = csv.reader(input_csv, delimiter=';')
         for row in input_reader:
+            printOut("^", end="")
 
             # The run scenario's parameters
             args2 = row[0][1:-1].split(', ')
@@ -145,6 +144,8 @@ def main(argv):
                 files_size_limit=files_sl,
             )
 
+            printOut("_", end="")
+
             # exporting the result of the execution to a properties file
 
             # example file-name: folder + EXPL__SEQ_ITP.sanfoundry_24-1.properties
@@ -175,12 +176,18 @@ def main(argv):
             print_optional_result(result_file, "blkio-write")
             print_optional_result(result_file, "exitcode")
 
-            result_file.write("log_file=" + row[1] + "\n")
-            result_file.write("result_files_folder=" + row[2] + "\n")
-
             result_file.close()
 
-    os.remove(csv_folder + "command.csv")
+    printOut("^\n\nWORK done!")
+
+
+def printOut(value, end="\n"):
+    """
+    This function prints the given String immediately and flushes the output.
+    """
+    sys.stdout.write(value)
+    sys.stdout.write(end)
+    sys.stdout.flush()
 
 
 if __name__ == '__main__':
