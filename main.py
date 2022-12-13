@@ -2,8 +2,10 @@ import csv
 import os.path
 import re
 import sys
+import math
 from typing import Optional, cast
 
+from tqdm import tqdm
 from benchexec import util
 from benchexec.runexecutor import RunExecutor
 
@@ -22,13 +24,15 @@ def main(argv):
     else:
         parent_folder = ""
 
-    printOut("Reading and executing commands: ", end="")
+    with open(argv[1]) as input_csv:
+        tot = len(input_csv.readlines())
 
-    # Reading the run scenarios from the *.csv, that is given as a program argument
+    # Reading the runs from the *.csv, that is given as a program argument
     with open(argv[1]) as input_csv:
         input_reader = csv.reader(input_csv, delimiter=';')
-        for row in input_reader:
-            printOut("^", end="")
+
+        for row in tqdm(input_reader, "Reading and executing commands", total=tot, unit="run"):
+            # printOut("^", end="")
 
             # The run scenario's parameters
             args2 = row[0][1:-1].split(', ')
@@ -144,7 +148,7 @@ def main(argv):
                 files_size_limit=files_sl,
             )
 
-            printOut("_", end="")
+            # printOut("_", end="")
 
             # exporting the result of the execution to a properties file
 
@@ -183,7 +187,7 @@ def main(argv):
         if re.compile('[0-9-_]').match(part):
             instance_num = part
             break
-    printOut("^\n\nWORK done!\n\ninstance code for Benchexec: "+instance_num)
+    printOut("\nWORK done!\n\ninstance code for Benchexec: "+instance_num)
 
 
 def printOut(value, end="\n"):
