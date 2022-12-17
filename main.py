@@ -2,7 +2,7 @@ import csv
 import os.path
 import re
 import sys
-import math
+import signal
 from typing import Optional, cast
 
 from tqdm import tqdm
@@ -12,8 +12,8 @@ from benchexec.runexecutor import RunExecutor
 
 def main(argv):
     # checking input folder format
-    if not re.compile('.*\.csv').match(argv[1]):
-        sys.exit("Bad command.csv input!")
+    if not re.compile('.*\.command\.csv').match(argv[1]):
+        sys.exit("Bad *.command.csv input!")
 
     # checking output folder format
     if len(argv) > 2:
@@ -31,8 +31,7 @@ def main(argv):
     with open(argv[1]) as input_csv:
         input_reader = csv.reader(input_csv, delimiter=';')
 
-        for row in tqdm(input_reader, "Reading and executing commands", total=tot, unit="run"):
-            # printOut("^", end="")
+        for row in tqdm(input_reader, "Reading and executing commands", total=tot, colour="blue", unit="run"):
 
             # The run scenario's parameters
             args2 = row[0][1:-1].split(', ')
@@ -129,8 +128,15 @@ def main(argv):
                     param_dict[key] = False
 
             # instantiate the RunExecutor with the given parameters - @param_dict -
+            executor = RunExecutor(**param_dict)
+
+            def stop_run(signum, frame):
+                executor.stop()
+
+            signal.signal(signal.SIGINT, stop_run)
+
             # execute the run, that's parameters have been read before
-            run_result = RunExecutor(**param_dict).execute_run(
+            run_result = executor.execute_run(
                 args2,
                 output_filename=out_fn,
                 output_dir=out_dir,
@@ -147,8 +153,6 @@ def main(argv):
                 files_count_limit=files_cl,
                 files_size_limit=files_sl,
             )
-
-            # printOut("_", end="")
 
             # exporting the result of the execution to a properties file
 
@@ -187,7 +191,7 @@ def main(argv):
         if re.compile('[0-9-_]').match(part):
             instance_num = part
             break
-    printOut("\nWORK done!\n\ninstance code for Benchexec: "+instance_num)
+    printOut("\nWORK done!\n\ninstance code for Benchexec: " + instance_num)
 
 
 def printOut(value, end="\n"):
