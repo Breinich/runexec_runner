@@ -1,6 +1,6 @@
 # Runexec Runner
 
-This is a needed tool and a small environment for the modified and distributed version of the [Benchexec](https://github.com/sosy-lab/benchexec) software.
+This is a needed tool and a small environment for the extended and distributed version of the [Benchexec](https://github.com/sosy-lab/benchexec) software.
 
 This tool is responsible for the execution on the target hardware of the different runs, with which the user would like to benchmark a software using the [modified Benchexec](https://github.com/Breinich/benchexec).
 
